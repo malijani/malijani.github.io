@@ -1,0 +1,217 @@
+<!--This is the base.html of all website ! please DRY-->
+
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>
+    اتصال به freenode تحت شبکه تور
+</title>
+
+    
+<link type="stylesheet" href="../statics/css/bootstrap-rtl.css">
+<link type="stylesheet" href="../statics/css/bootstrap-grid.css">
+<link type="stylesheet" href="../statics/css/bootstrap-reboot.css">
+<link rel="stylesheet" href="../statics/css/all.css"> <!-- fontawesome-->
+<link type="text/css" href="../statics/css/style.css" rel="stylesheet" />
+
+
+</head>
+    <body id="page-top">
+    <div class="container">
+        <div class="row">
+            <div class="col-xl-12">
+                
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg bg-secondary default fixed-top" id="mainNav">
+    <div class="container">
+        <a class="navbar-brand js-scroll-trigger font-weight-normal" href="hexchat-tor-freenode.html#page-top">اتصال به freenode تحت شبکه تور</a>
+        <button class="navbar-toggler navbar-toggler-right font-weight-bold bg-primary text-white rounded" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="fas fa-bars"> بیشتر</i>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item mx-0 mx-lg-1">
+                    <a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="../index.html">خانه</a>
+                </li>
+                <li class="nav-item mx-0 mx-lg-1">
+                    <a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="../resume/index.html">رزومه</a>
+                </li>
+                <!--<li class="nav-item mx-0 mx-lg-1">
+                    <a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="/#about">درباره من</a>
+                </li>-->
+                <li class="nav-item mx-0 mx-lg-1">
+                    <a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger left" href="index.html">بلاگ</a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</nav>
+<!--end navigation-->
+
+
+                <!--Content of the website just put things in here-->
+                
+    <h1 class="masthead text-center">اتصال به freenode تحت شبکه تور</h1>
+
+    
+        <img src="../media/images/main.png" class="card-img-top text-center rounded">
+    
+    <smal class='text-muted'>تاریخ انتشار :‌1398 Esfand 15</smal>
+    <p class="text-center bg-light rounded mt-2"><p dir="rtl">توی دنیای دیجیتال ممکنه خیلی ها نیاز به یه ارتباط حرفه ای تر با اشخاص خاصی که سراسر دنیا&nbsp; در یک حیطه عمل میکنن داشته باشن. من توی این پست قصد حرف زدن در رابطه با <strong>irc</strong> و بررسی اون و پروتکل های مختلف ندارم و قصدم فقط نحوه تنظیم یکی از کلاینت های اون به نام hexchat هست که با اون به صورت ناشناس و به کمک شبکه TOR به شبکه Freenode متصل بشیم و بتونیم با دیگران ارتباط برقرار کنیم و به انجام کارهای خودمون برسیم.</p>
+
+<p dir="rtl">&nbsp;</p>
+
+<ul dir="rtl">
+	<li>
+	<h3>نصب ابزار های مورد نیاز:</h3>
+	</li>
+</ul>
+
+<p dir="rtl">نصب در توزیع دبیان یا توزیع های برپایه دبیان :&zwnj;</p>
+
+<p style="text-align:center"><code>sudo apt install hexchat tor</code></p>
+
+<p dir="rtl">(بنظرم نیاز نباشه بگم که اگر از توزیع متفاوتی استفاده میکنی باید موجودیت بسته ها رو با جست و جو توی مخازن مشخص کنی و بعد اون ها رو نصب کنید.</p>
+
+<p dir="rtl">&nbsp;</p>
+
+<ul dir="rtl">
+	<li>
+	<h3>راه اندازی سرویس TOR :</h3>
+	</li>
+</ul>
+
+<p dir="rtl">سپس سرویس تور رو راه اندازی و فعال کنید:</p>
+
+<p style="text-align:center"><code>sudo systemctl start tor</code></p>
+
+<p style="text-align:center"><code>sudo systemctl enable tor</code></p>
+
+<p dir="rtl">به کمک journal میتونید سرویس تور رو مانیتور کنید و از سلامت اون اطمینان پیدا کنید :</p>
+
+<p style="text-align:center"><code>journalctl -xfu tor</code></p>
+
+<p dir="rtl">که خروجی مانند تصویر زیر هست:</p>
+
+<p style="text-align:center"><img alt="خروجی journalctl -xfu tor" class="img-fluid" src="../media/images/hexchat_tor_freenode/journalctl-xfu-tor.png" /></p>
+
+<p dir="rtl">توجه کنید که باید اون<span style="color:#e74c3c"> <u><strong>Bootstrapped 100%</strong></u></span> رو ببینید و اگر چنین نبود نیاز به کانفیگ تور و استفاده از پل دارید که توی یه پست دیگه در این مورد توضیح میدم.</p>
+
+<p dir="rtl">اگر خروجی لاگ تور مانند تصویر بالا بود میتونید از پروکسی تور با مشخصات زیر استفاده کنید :</p>
+
+<div dir="rtl" style="background:#eeeeee none repeat scroll 0% 0%; border:1px solid #cccccc; padding:5px 10px; text-align:center">socks5@localhost:9050</div>
+
+<h3 dir="rtl">&nbsp;</h3>
+
+<ul dir="rtl">
+	<li>
+	<h3>ساخت certificate :</h3>
+	</li>
+</ul>
+
+<p dir="rtl">حالا وقت اینه که برای hexchat یه گواهی صادر کنیم :)&nbsp; با استفاده از دستورات زیر میتونید چنین کاری رو انجام بدید :</p>
+
+<p style="text-align:center"><span dir="ltr"><code>mkdir -p $HOME/.config/hexchat/certs</code></span></p>
+
+<p style="text-align:center"><code><span dir="ltr">openssl req -x509 -new -newkey rsa:4096 -sha256 -days 1000 -nodes -out freenode.pem -keyout freenode.pem</span></code></p>
+
+<p style="text-align:center"><code><span dir="ltr">mv freenode.pem $HOME/.config/hexchat/certs/</span></code></p>
+
+<p style="text-align:center"><code><span dir="ltr">openssl x509 -in $HOME/.config/hexchat/certs/freenode.pem -outform der | sha1sum -b | cut -d&#39; &#39; -f1</span></code></p>
+
+<p dir="rtl"><span dir="rtl">خروجی آخرین دستور <strong>امضای دیجیتالی</strong>(finger print) شما هست ؛ پس اون رو حتماً کپی کنید.</span></p>
+
+<p dir="rtl">&nbsp;</p>
+
+<ul dir="rtl">
+	<li>
+	<h3>افزودن امضای دیجیتالی به حساب کاربری freenode :</h3>
+	</li>
+</ul>
+
+<p dir="rtl">بعد از این همه باید این امضای دیجیتالی رو به حساب کاربری خودتون توی freenode اضافه کنید(در مورد ساخت حساب کاربری توی freenode در یه پست دیگه توضیح خواهم داد). کافیه با استفاده از hexchat وارد شبکه freenode بشید و پسورد حساب کاربری خودتون رو به صورت زیر وارد کنید تا بتونید امضای دیجیتالی به اکانت خودتون اضافه کنید:</p>
+
+<div style="background:#eeeeee none repeat scroll 0% 0%; border:1px solid #cccccc; padding:5px 10px; text-align:center"><span dir="ltr">/msg NickServ identify &quot;YOUR PASSWORD&quot;</span></div>
+
+<p dir="rtl">&nbsp;</p>
+
+<p dir="rtl">بعد از این که وارد حساب کاربری خودتون شدید کافیه اون امضای دیجیتال رو به صورت زیر به حساب کاربری خودتون اضافه کنید :</p>
+
+<div style="background:#eeeeee none repeat scroll 0% 0%; border:1px solid #cccccc; padding:5px 10px; text-align:center"><span dir="ltr">/msg NickServ CERT ADD &quot;YOUR KEY FINGERPRINT&quot;</span></div>
+
+<p>&nbsp;</p>
+
+<ul dir="rtl">
+	<li>
+	<h3>کانفیگ hexchat برای اتصال به سرور مختص شبکه تور freenode :&nbsp;</h3>
+	</li>
+</ul>
+
+<p dir="rtl">درون ابزار <strong>hexchat</strong> کلید های <strong>ctrl+s</strong> رو بفشارید تا لیست شبکه ها نمایان بشه ؛ <strong>freenode</strong> رو انتخاب کنید و کلید <strong>edit</strong> کنار لیست رو بفشارید تا وارد تنظیمات این شبکه بشید. در بخش سرورها <strong>freenodeok2gncmy.onion</strong>&nbsp; رو اضافه کنید و متود لاگین رو به <strong>SASL EXTERNAL(cert)</strong>&nbsp; تغییر بدید.</p>
+
+<p dir="rtl" style="text-align:left">&nbsp;</p>
+
+<p dir="rtl" style="text-align:left"><img alt="بخش تنظیمات شبکه hexchat" class="img-fluid" src="../media/images/hexchat_tor_freenode/hexchat-network-settings.png" style="height:583px; width:528px" /><img alt="لیست شبکه ها" class="img-fluid" src="../media/images/hexchat_tor_freenode/ctrl+s-network-list.png" style="height:473px; width:479px" /></p>
+
+<p dir="rtl">&nbsp;</p>
+
+<ul dir="rtl">
+	<li>
+	<h3>کانفیگ hexchat برای استفاده از شبکه تور :</h3>
+	</li>
+</ul>
+
+<p dir="rtl">وارد بخش <strong>Settings&gt;Preferences </strong>بشید و در منو تنظیمات بخش <strong>Network setup </strong>رو انتخاب کنید و پروکسی تور رو مثل تصویر زیر اضافه کنید :</p>
+
+<p dir="rtl"><img alt="تنظیمات شبکه hexchat" class="img-fluid" src="../media/images/hexchat_tor_freenode/hexchat-preferences-network-proxy.png" style="height:651px; width:852px" /></p>
+
+<p dir="rtl">&nbsp;</p>
+
+<p dir="rtl">&nbsp;</p>
+
+<p dir="rtl">و در آخر هم ابزار hexchat رو ببندید و دوباره اجرا کنید و با یه آیپی cloak شده به کمک شبکه تور به freenode متصل بشید!</p>
+
+<p dir="rtl">&nbsp;</p>
+
+<p dir="rtl">&nbsp;</p>
+
+<p dir="rtl">&nbsp;</p>
+
+<p dir="rtl">&nbsp;</p>
+
+<p dir="rtl">&nbsp;</p></p>
+    
+    <button type="button" class="btn btn-info mr-2" onclick="history.back()">بازگشت</button>
+
+
+                <!-- Scroll to Top Button (Only visible on small and extra-small screen sizes) -->
+<div class="scroll-to-top d-lg-none position-fixed ">
+    <a class="js-scroll-trigger d-block text-center text-white rounded" href="hexchat-tor-freenode.html#page-top">
+        <i class="fa fa-chevron-up"></i>
+    </a>
+</div>
+
+                
+<!-- Bootstrap core JavaScript -->
+<script src="../statics/js/jquery-3.1.1.min.js"></script>
+<script src="../statics/js/bootstrap.bundle.min.js"></script>
+<script src="../statics/js/bootstrap.js"></script>
+<!-- Plugin JavaScript -->
+<script src="../statics/js/jquery.easing.min.js"></script>
+<!-- Contact Form JavaScript -->
+<script src="../statics/js/jqBootstrapValidation.js"></script>
+<script src="../statics/js/contact_me.js"></script>
+<!-- Contact form static use-->
+<!--<script src="https://kwes.io/js/kwes.js"></script>-->
+<!-- Custom scripts for this template -->
+<script  src="../statics/js/scripts.js"></script>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
