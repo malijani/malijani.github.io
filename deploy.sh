@@ -12,7 +12,7 @@ fi
 
 # remove all files except these:
 shopt -s extglob
-rm -rv !(".gitignore"|"CNAME"|".git"|".nojekyll"|".venv"|".vscode"|"deploy.sh"|"src"|"files"|"requirements.txt"| "README.md")
+rm -rv !(".gitignore"|"CNAME"|".git"|".nojekyll"|".venv"|".vscode"|"deploy.sh"|"src"|"requirements.txt"| "README.md")
 shopt -u extglob
 
 # download website from localhost:8000
