@@ -1,0 +1,1 @@
+(function($){/*Set js, jquery code here*/})(jQuery)
