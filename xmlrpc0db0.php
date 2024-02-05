@@ -2,13 +2,13 @@
 	<service>
 		<engineName>WordPress</engineName>
 		<engineLink>https://wordpress.org/</engineLink>
-		<homePageLink>https://alijaniam.test</homePageLink>
+		<homePageLink>https://alijaniam.ir</homePageLink>
 		<apis>
-			<api name="WordPress" blogID="1" preferred="true" apiLink="https://alijaniam.test/xmlrpc.php" />
-			<api name="Movable Type" blogID="1" preferred="false" apiLink="https://alijaniam.test/xmlrpc.php" />
-			<api name="MetaWeblog" blogID="1" preferred="false" apiLink="https://alijaniam.test/xmlrpc.php" />
-			<api name="Blogger" blogID="1" preferred="false" apiLink="https://alijaniam.test/xmlrpc.php" />
-				<api name="WP-API" blogID="1" preferred="false" apiLink="https://alijaniam.test/wp-json/" />
+			<api name="WordPress" blogID="1" preferred="true" apiLink="https://alijaniam.ir/xmlrpc.php" />
+			<api name="Movable Type" blogID="1" preferred="false" apiLink="https://alijaniam.ir/xmlrpc.php" />
+			<api name="MetaWeblog" blogID="1" preferred="false" apiLink="https://alijaniam.ir/xmlrpc.php" />
+			<api name="Blogger" blogID="1" preferred="false" apiLink="https://alijaniam.ir/xmlrpc.php" />
+				<api name="WP-API" blogID="1" preferred="false" apiLink="https://alijaniam.ir/wp-json/" />
 			</apis>
 	</service>
 </rsd>
