@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+
+# --- Configuration ---
+# Set the default branch where your source code lives
+SOURCE_BRANCH="master"
+# Set the branch you want to deploy the static site to
+DEPLOY_BRANCH="master"
+
+# --- Style and Color Definitions ---
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+CYAN=$(tput setaf 6)
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+TERM_WIDTH=$(tput cols)
+
+# --- Argument Parsing ---
+if [[ "$1" != "--url" ]] || [[ -z "$2" ]]; then
+  echo -e "${BOLD}${RED}Usage: $0 --url <your-website-url>${RESET}"
+  echo -e "${YELLOW}Example: $0 --url https://alijaniam.test${RESET}"
+  exit 1
+fi
+URL="$2"
+URL_HOST=$(echo "$URL" | awk -F/ '{print $3}') # Extracts the hostname (e.g., alijaniam.test)
+
+# --- Pre-flight Checks ---
+echo -e "${BOLD}${CYAN}Checking if URL is accessible...${RESET}"
+if ! wget --spider --no-check-certificate "$URL" &>/dev/null; then
+    echo -e "${BOLD}${RED}URL '$URL' is not accessible. Aborting...${RESET}"
+    exit 1
+fi
+echo -e "${BOLD}${GREEN}URL is up! Starting deployment.${RESET}"
+
+echo -e "\n${BOLD}${CYAN}Checking out ${SOURCE_BRANCH} branch...${RESET}"
+git checkout "$SOURCE_BRANCH"
+
+if [[ -n $(git status --porcelain) ]]; then
+    echo -e "${BOLD}${RED}Uncommitted changes detected on ${SOURCE_BRANCH}. Please commit or stash them. Aborting...${RESET}"
+    exit 1
+fi
+
+echo -e "${BOLD}${GREEN}${SOURCE_BRANCH} is clean. Proceeding...${RESET}"
+
+# --- Git Information Gathering ---
+COMMIT=$(git rev-parse --short HEAD)
+PREV_COMMIT=$(git rev-parse --short @"${DEPLOY_BRANCH}")
+REPO_URL=$(git config --get remote.origin.url \
+  | sed -e 's/git@github.com:/https:\/\/github.com\//' \
+        -e 's/\.git$//')
+COMMIT_URL="${REPO_URL}/commit/${COMMIT}"
+COMPARE_URL="${REPO_URL}/compare/${PREV_COMMIT}...${COMMIT}"
+
+# --- Site Download ---
+echo -e "\n${BOLD}${CYAN}Downloading site from ${URL}...${RESET}"
+# -m: mirror (recursive, timestamps, etc.)
+# -k: convert links to be suitable for local viewing
+# -E: adjust extension to .html
+# -p: download all page requisites (css, js, images)
+# -np: don't ascend to the parent directory
+wget -mkEpnp --no-check-certificate "$URL"
+if [ ! -d "$URL_HOST" ]; then
+    echo -e "${BOLD}${RED}Failed to download site. Directory '${URL_HOST}' not found. Aborting...${RESET}"
+    exit 1
+fi
+echo -e "${BOLD}${GREEN}Site downloaded successfully.${RESET}"
+
+# --- Deployment to gh-pages ---
+echo -e "\n${BOLD}${CYAN}Checking out ${DEPLOY_BRANCH} branch...${RESET}"
+git checkout "$DEPLOY_BRANCH"
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ "$BRANCH" != "$DEPLOY_BRANCH" ]]; then
+  echo -e "${BOLD}${RED}Failed to switch to ${DEPLOY_BRANCH} branch. Aborting...${RESET}"
+  exit 1
+fi
+
+# Enable extended globbing to exclude files from deletion
+shopt -s extglob
+echo -e "\n${BOLD}${CYAN}Cleaning old files in ${DEPLOY_BRANCH} branch...${RESET}"
+# Remove all files except for dotfiles and deployment-related scripts
+rm -rv !(".gitignore"|"CNAME"|".git"|".nojekyll"|".vscode"|"*.sh")
+shopt -u extglob
+
+echo -e "\n${BOLD}${CYAN}Copying new site contents...${RESET}"
+# Checkout the downloaded site from the source branch into the current directory
+git checkout "$SOURCE_BRANCH" -- "$URL_HOST"
+
+echo -e "\n${BOLD}${CYAN}Moving site contents to root...${RESET}"
+mv "$URL_HOST"/* .
+
+echo -e "\n${BOLD}${CYAN}Cleaning up temporary files...${RESET}"
+rm -rfv "$URL_HOST"
+
+# --- Committing and Pushing ---
+echo -e "\n${BOLD}${CYAN}Adding changes to git...${RESET}"
+git add .
+echo -e "\n${BOLD}${CYAN}Committing changes...${RESET}"
+git commit -m "deploy: ${COMMIT} from ${SOURCE_BRANCH}"
+echo -e "\n${BOLD}${CYAN}Pushing to ${DEPLOY_BRANCH} branch...${RESET}"
+git push -u origin "$DEPLOY_BRANCH"
+
+# --- Final Cleanup ---
+echo -e "\n${BOLD}${CYAN}Switching back to ${SOURCE_BRANCH} branch...${RESET}"
+git checkout "$SOURCE_BRANCH"
+# Clean up the downloaded folder from the source branch as well
+rm -rf "$URL_HOST"
+
+# --- Deployment Summary Banner ---
+draw_line() {
+    printf "${BOLD}${GREEN}╔"; for ((i=2;i<TERM_WIDTH;i++)); do printf "═"; done; printf "╗${RESET}\n"
+}
+draw_middle() {
+    local left="$1"
+    local right="$2"
+    local padding=$((TERM_WIDTH - ${#left} - ${#right} - 4))
+    printf "${BOLD}${GREEN}║${RESET} ${BOLD}%s${RESET}%*s ${BOLD}${GREEN}║${RESET}\n" "$left" "$padding" "$right"
+}
+
+echo -e "\n"
+draw_line
+draw_middle "  Deployment to ${DEPLOY_BRANCH} successful! " ""
+draw_middle "  View commit:" "${COMMIT_URL}"
+draw_middle "  Compare changes:" "${COMPARE_URL}"
+printf "${BOLD}${GREEN}╚"; for ((i=2;i<TERM_WIDTH;i++)); do printf "═"; done; printf "╝${RESET}\n"
