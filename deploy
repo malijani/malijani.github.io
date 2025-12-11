@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
 # --- Configuration ---
-# Set the default branch where your source code lives
 SOURCE_BRANCH="master"
-# Set the branch you want to deploy the static site to
-DEPLOY_BRANCH="master"
+DEPLOY_BRANCH="gh-pages"
+DRY_RUN_DIR="dry_run_site"
 
 # --- Style and Color Definitions ---
 RED=$(tput setaf 1)
@@ -16,56 +15,73 @@ RESET=$(tput sgr0)
 TERM_WIDTH=$(tput cols)
 
 # --- Argument Parsing ---
-if [[ "$1" != "--url" ]] || [[ -z "$2" ]]; then
-  echo -e "${BOLD}${RED}Usage: $0 --url <your-website-url>${RESET}"
+URL=""
+DRY_RUN=false
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --url) URL="$2"; shift ;;
+        --dry-run) DRY_RUN=true ;;
+        *) echo -e "${BOLD}${RED}Unknown parameter passed: $1${RESET}"; exit 1 ;;
+    esac
+    shift
+done
+
+if [[ -z "$URL" ]]; then
+  echo -e "${BOLD}${RED}Usage: $0 --url <your-website-url> [--dry-run]${RESET}"
   echo -e "${YELLOW}Example: $0 --url https://alijaniam.test${RESET}"
   exit 1
 fi
-URL="$2"
-URL_HOST=$(echo "$URL" | awk -F/ '{print $3}') # Extracts the hostname (e.g., alijaniam.test)
+URL_HOST=$(echo "$URL" | awk -F/ '{print $3}')
 
 # --- Pre-flight Checks ---
-echo -e "${BOLD}${CYAN}Checking if URL is accessible...${RESET}"
-if ! wget --spider --no-check-certificate "$URL" &>/dev/null; then
-    echo -e "${BOLD}${RED}URL '$URL' is not accessible. Aborting...${RESET}"
-    exit 1
-fi
-echo -e "${BOLD}${GREEN}URL is up! Starting deployment.${RESET}"
-
-echo -e "\n${BOLD}${CYAN}Checking out ${SOURCE_BRANCH} branch...${RESET}"
-git checkout "$SOURCE_BRANCH"
+echo -e "${BOLD}${CYAN}Checking out ${SOURCE_BRANCH} branch...${RESET}"
+git checkout "$SOURCE_BRANCH" &>/dev/null
 
 if [[ -n $(git status --porcelain) ]]; then
     echo -e "${BOLD}${RED}Uncommitted changes detected on ${SOURCE_BRANCH}. Please commit or stash them. Aborting...${RESET}"
     exit 1
 fi
 
-echo -e "${BOLD}${GREEN}${SOURCE_BRANCH} is clean. Proceeding...${RESET}"
+# --- Download Logic ---
+if [[ "$DRY_RUN" == false ]] && [[ -d "$DRY_RUN_DIR" ]]; then
+    echo -e "\n${BOLD}${GREEN}Found pre-downloaded files in '${DRY_RUN_DIR}/'. Using them for deployment.${RESET}"
+else
+    echo -e "\n${BOLD}${CYAN}Checking if URL is accessible...${RESET}"
+    if ! wget --spider --no-check-certificate "$URL" &>/dev/null; then
+        echo -e "${BOLD}${RED}URL '$URL' is not accessible. Aborting...${RESET}"
+        exit 1
+    fi
+    echo -e "${BOLD}${GREEN}URL is up! Starting download.${RESET}"
 
-# --- Git Information Gathering ---
+    rm -rf "$URL_HOST" "$DRY_RUN_DIR"
+    
+    echo -e "\n${BOLD}${CYAN}Downloading site from ${URL}...${RESET}"
+    # ADDED --progress flag for a clean progress bar
+    wget -mkEpnp --no-check-certificate --progress=bar:force:noscroll "$URL"
+    
+    if [ ! -d "$URL_HOST" ]; then
+        echo -e "\n${BOLD}${RED}Failed to download site. Directory '${URL_HOST}' not found. Aborting...${RESET}"
+        exit 1
+    fi
+    echo -e "\n${BOLD}${GREEN}Site downloaded successfully.${RESET}"
+
+    if [[ "$DRY_RUN" == true ]]; then
+        echo -e "\n${BOLD}${CYAN}Dry run mode enabled. Moving downloaded files to '${DRY_RUN_DIR}'...${RESET}"
+        mv "$URL_HOST" "$DRY_RUN_DIR"
+        echo -e "\n${BOLD}${GREEN}Dry run complete. Inspect the downloaded site in the '${DRY_RUN_DIR}/' directory.${RESET}"
+        exit 0
+    fi
+fi
+
+# --- Full Deployment (only runs if not in dry-run mode) ---
+echo -e "\n${BOLD}${CYAN}Proceeding with full deployment...${RESET}"
+
 COMMIT=$(git rev-parse --short HEAD)
-PREV_COMMIT=$(git rev-parse --short @"${DEPLOY_BRANCH}")
-REPO_URL=$(git config --get remote.origin.url \
-  | sed -e 's/git@github.com:/https:\/\/github.com\//' \
-        -e 's/\.git$//')
+PREV_COMMIT=$(git rev-parse --short @"${DEPLOY_BRANCH}" 2>/dev/null || echo "initial")
+REPO_URL=$(git config --get remote.origin.url | sed -e 's/git@github.com:/https:\/\/github.com\//' -e 's/\.git$//')
 COMMIT_URL="${REPO_URL}/commit/${COMMIT}"
 COMPARE_URL="${REPO_URL}/compare/${PREV_COMMIT}...${COMMIT}"
 
-# --- Site Download ---
-echo -e "\n${BOLD}${CYAN}Downloading site from ${URL}...${RESET}"
-# -m: mirror (recursive, timestamps, etc.)
-# -k: convert links to be suitable for local viewing
-# -E: adjust extension to .html
-# -p: download all page requisites (css, js, images)
-# -np: don't ascend to the parent directory
-wget -mkEpnp --no-check-certificate "$URL"
-if [ ! -d "$URL_HOST" ]; then
-    echo -e "${BOLD}${RED}Failed to download site. Directory '${URL_HOST}' not found. Aborting...${RESET}"
-    exit 1
-fi
-echo -e "${BOLD}${GREEN}Site downloaded successfully.${RESET}"
-
-# --- Deployment to gh-pages ---
 echo -e "\n${BOLD}${CYAN}Checking out ${DEPLOY_BRANCH} branch...${RESET}"
 git checkout "$DEPLOY_BRANCH"
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -74,24 +90,18 @@ if [[ "$BRANCH" != "$DEPLOY_BRANCH" ]]; then
   exit 1
 fi
 
-# Enable extended globbing to exclude files from deletion
 shopt -s extglob
 echo -e "\n${BOLD}${CYAN}Cleaning old files in ${DEPLOY_BRANCH} branch...${RESET}"
-# Remove all files except for dotfiles and deployment-related scripts
 rm -rv !(".gitignore"|"CNAME"|".git"|".nojekyll"|".vscode"|"*.sh")
 shopt -u extglob
 
-echo -e "\n${BOLD}${CYAN}Copying new site contents...${RESET}"
-# Checkout the downloaded site from the source branch into the current directory
-git checkout "$SOURCE_BRANCH" -- "$URL_HOST"
+echo -e "\n${BOLD}${CYAN}Moving new site contents to root...${RESET}"
+if [[ -d "$DRY_RUN_DIR" ]]; then
+    mv "$DRY_RUN_DIR"/* .
+else
+    mv "$URL_HOST"/* .
+fi
 
-echo -e "\n${BOLD}${CYAN}Moving site contents to root...${RESET}"
-mv "$URL_HOST"/* .
-
-echo -e "\n${BOLD}${CYAN}Cleaning up temporary files...${RESET}"
-rm -rfv "$URL_HOST"
-
-# --- Committing and Pushing ---
 echo -e "\n${BOLD}${CYAN}Adding changes to git...${RESET}"
 git add .
 echo -e "\n${BOLD}${CYAN}Committing changes...${RESET}"
@@ -99,26 +109,11 @@ git commit -m "deploy: ${COMMIT} from ${SOURCE_BRANCH}"
 echo -e "\n${BOLD}${CYAN}Pushing to ${DEPLOY_BRANCH} branch...${RESET}"
 git push -u origin "$DEPLOY_BRANCH"
 
-# --- Final Cleanup ---
 echo -e "\n${BOLD}${CYAN}Switching back to ${SOURCE_BRANCH} branch...${RESET}"
 git checkout "$SOURCE_BRANCH"
-# Clean up the downloaded folder from the source branch as well
-rm -rf "$URL_HOST"
+rm -rf "$URL_HOST" "$DRY_RUN_DIR"
 
 # --- Deployment Summary Banner ---
-draw_line() {
-    printf "${BOLD}${GREEN}╔"; for ((i=2;i<TERM_WIDTH;i++)); do printf "═"; done; printf "╗${RESET}\n"
-}
-draw_middle() {
-    local left="$1"
-    local right="$2"
-    local padding=$((TERM_WIDTH - ${#left} - ${#right} - 4))
-    printf "${BOLD}${GREEN}║${RESET} ${BOLD}%s${RESET}%*s ${BOLD}${GREEN}║${RESET}\n" "$left" "$padding" "$right"
-}
-
-echo -e "\n"
-draw_line
-draw_middle "  Deployment to ${DEPLOY_BRANCH} successful! " ""
-draw_middle "  View commit:" "${COMMIT_URL}"
-draw_middle "  Compare changes:" "${COMPARE_URL}"
-printf "${BOLD}${GREEN}╚"; for ((i=2;i<TERM_WIDTH;i++)); do printf "═"; done; printf "╝${RESET}\n"
+draw_line() { printf "${BOLD}${GREEN}╔"; for ((i=2;i<TERM_WIDTH;i++)); do printf "═"; done; printf "╗${RESET}\n"; }
+draw_middle() { local l="$1" r="$2"; local p=$((TERM_WIDTH - ${#l} - ${#r} - 4)); printf "${BOLD}${GREEN}║${RESET} ${BOLD}%s${RESET}%*s ${BOLD}${GREEN}║${RESET}\n" "$l" "$p" "$r"; }
+echo -e "\n"; draw_line; draw_middle "  Deployment to ${DEPLOY_BRANCH} successful! " ""; draw_middle "  View source commit:" "${COMMIT_URL}"; draw_middle "  Compare changes:" "${COMPARE_URL}"; printf "${BOLD}${GREEN}╚"; for ((i=2;i<TERM_WIDTH;i++)); do printf "═"; done; printf "╝${RESET}\n"
