@@ -56,7 +56,6 @@ else
     rm -rf "$URL_HOST" "$DRY_RUN_DIR"
     
     echo -e "\n${BOLD}${CYAN}Downloading site from ${URL}...${RESET}"
-    # ADDED --progress flag for a clean progress bar
     wget -mkEpnp --no-check-certificate --progress=bar:force:noscroll "$URL"
     
     if [ ! -d "$URL_HOST" ]; then
