@@ -2,7 +2,7 @@
 
 # --- Configuration ---
 SOURCE_BRANCH="master"
-DEPLOY_BRANCH="master"
+DEPLOY_BRANCH="gh-pages"
 DRY_RUN_DIR="dry_run_site"
 
 # --- Style and Color Definitions ---
